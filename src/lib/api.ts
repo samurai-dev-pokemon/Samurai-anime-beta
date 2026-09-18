@@ -238,27 +238,39 @@ export async function getEpisodeTitles(malId: number, page = 1): Promise<Episode
 }
 
 /* ---------------- playback ---------------- */
+
 export async function resolveWatch(opts: {
   malId: number;
   ep: number;
   type: "sub" | "dub";
-  source?: "anikoto" | "animeheaven";
+  source?: "anikoto" | "desidub" | "animeheaven";
   server?: string;
   strict?: boolean;
 }): Promise<WatchResult | null> {
   const { malId, ep, type, source = "anikoto", server, strict } = opts;
-  const params = new URLSearchParams({
-    source,
-    malId: String(malId),
-    ep: String(ep),
-    type,
-  });
-  if (server) params.set("server", server);
-  if (strict) params.set("strict", "1");
+
+  const idPart = `mal-${malId}`; // path-based format: AniList id OR mal-{malId}
+  const query = new URLSearchParams();
+  if (server) query.set("server", server);
+  if (strict) query.set("strict", "1");
+  const qs = query.toString();
+
+  const url = `${API_BASE}/watch/${source}/${idPart}/${ep}/${type}${qs ? `?${qs}` : ""}`;
+
   try {
-    const raw = await getJSON<any>(`${API_BASE}/watch?${params.toString()}`);
-    return raw as WatchResult;
-  } catch {
+    const res = await fetch(url);
+    const body = await res.json().catch(() => null);
+    if (!res.ok) {
+      console.warn("[watch] failed", res.status, url, body);
+      return null;
+    }
+    if (body?.error) {
+      console.warn("[watch] api error", url, body);
+      return null;
+    }
+    return body as WatchResult;
+  } catch (e) {
+    console.warn("[watch] network error", url, e);
     return null;
   }
 }
@@ -273,7 +285,7 @@ export async function findBestStream(opts: {
   ep: number;
   type: "sub" | "dub";
 }): Promise<WatchResult | null> {
-  const sources: Array<"anikoto" | "animeheaven"> = ["anikoto", "animeheaven"];
+  const sources: Array<"anikoto" | "desidub"> = ["anikoto", "desidub"];
   let lastResult: WatchResult | null = null;
 
   for (const source of sources) {
