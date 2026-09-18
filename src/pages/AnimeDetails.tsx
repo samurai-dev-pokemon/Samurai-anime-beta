@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { href } from "../utils/router";
 import {
   cleanDesc,
@@ -107,9 +107,9 @@ export default function AnimeDetails() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <a href={href.watch(anime.malId, 1, "sub")} className="inline-flex h-11 items-center gap-2 rounded-full bg-red-600 px-6 text-sm font-semibold text-white shadow-lg shadow-red-900/40 transition hover:bg-red-500">
+            <Link to={href.watch(anime.malId, 1, "sub")} className="inline-flex h-11 items-center gap-2 rounded-full bg-red-600 px-6 text-sm font-semibold text-white shadow-lg shadow-red-900/40 transition hover:bg-red-500">
               <Icon.Play className="h-4 w-4" /> Watch Episode 1
-            </a>
+            </Link>
             {trailer && (
               <button onClick={() => setShowTrailer(true)} className="inline-flex h-11 items-center gap-2 rounded-full border border-white/15 bg-white/5 px-5 text-sm font-medium text-zinc-100 backdrop-blur transition hover:bg-white/10">
                 <Icon.Film className="h-4 w-4" /> Trailer
@@ -144,13 +144,13 @@ export default function AnimeDetails() {
         <Section title="Episodes">
           <div className="grid max-h-[400px] grid-cols-6 gap-1.5 overflow-y-auto p-1 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12">
             {episodeNumbers.map((n) => (
-              <a
+              <Link
                 key={n}
-                href={href.watch(anime.malId, n, "sub")}
+                to={href.watch(anime.malId, n, "sub")}
                 className="grid aspect-square place-items-center rounded-md text-xs font-medium text-zinc-500 transition hover:bg-white/5 hover:text-white"
               >
                 {n}
-              </a>
+              </Link>
             ))}
           </div>
         </Section>
