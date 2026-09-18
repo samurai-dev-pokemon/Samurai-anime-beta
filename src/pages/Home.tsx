@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { cn } from "../utils/cn";
 import { href } from "../utils/router";
 import {
@@ -72,12 +73,12 @@ function Hero({ items }: { items: Anime[] }) {
             ))}
           </div>
           <div className="flex items-center gap-3 pt-2">
-            <a href={href.watch(a.malId, 1)} className="inline-flex h-11 items-center gap-2 rounded-full bg-red-600 px-6 text-sm font-semibold text-white shadow-lg shadow-red-900/40 transition hover:bg-red-500 active:scale-[0.98]">
+            <Link to={href.watch(a.malId, 1)} className="inline-flex h-11 items-center gap-2 rounded-full bg-red-600 px-6 text-sm font-semibold text-white shadow-lg shadow-red-900/40 transition hover:bg-red-500 active:scale-[0.98]">
               <Icon.Play className="h-4 w-4" /> Watch now
-            </a>
-            <a href={href.anime(a.malId)} className="inline-flex h-11 items-center rounded-full border border-white/15 bg-white/5 px-6 text-sm font-medium text-zinc-100 backdrop-blur transition hover:bg-white/10">
+            </Link>
+            <Link to={href.anime(a.malId)} className="inline-flex h-11 items-center rounded-full border border-white/15 bg-white/5 px-6 text-sm font-medium text-zinc-100 backdrop-blur transition hover:bg-white/10">
               Details
-            </a>
+            </Link>
           </div>
         </div>
 
@@ -102,7 +103,7 @@ function ContinueWatching() {
           const pct = p.duration ? (p.time / p.duration) * 100 : 0;
           return (
             <div key={p.animeId} className="group relative w-[220px] shrink-0 snap-start sm:w-[260px]">
-              <a href={href.watch(p.animeId, p.episode, p.audio)} className="block overflow-hidden rounded-xl ring-1 ring-white/5">
+              <Link to={href.watch(p.animeId, p.episode, p.audio)} className="block overflow-hidden rounded-xl ring-1 ring-white/5">
                 <div className="relative aspect-video bg-zinc-900">
                   <img src={p.cover} alt={p.title} loading="lazy" className="h-full w-full object-cover object-top transition duration-500 group-hover:scale-105" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
@@ -121,7 +122,7 @@ function ContinueWatching() {
                     <div className="h-full bg-red-500" style={{ width: `${Math.max(3, Math.min(100, pct))}%` }} />
                   </div>
                 </div>
-              </a>
+              </Link>
               <button
                 onClick={() => removeProgress(p.animeId)}
                 aria-label="Remove"
