@@ -65,12 +65,16 @@ export default function AnimeDetails() {
   return (
     <div className="min-h-screen pb-20">
       <div className="relative h-[56vh] min-h-[380px] w-full overflow-hidden">
-        <img src={anime.banner || anime.cover || anime.poster || ""} alt="" className="h-full w-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/60 to-zinc-950/20" />
-        <div className="absolute inset-0 bg-gradient-to-r from-zinc-950/90 via-zinc-950/20 to-transparent" />
+        <img
+          src={anime.banner || anime.cover || anime.poster || ""}
+          alt=""
+          className="h-full w-full scale-105 object-cover blur-sm"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-zinc-950/40" />
+        <div className="absolute inset-0 bg-gradient-to-r from-zinc-950/95 via-zinc-950/40 to-transparent" />
       </div>
 
-      <Container className="-mt-40 flex flex-col gap-8 lg:flex-row">
+      <Container className="relative z-10 -mt-40 flex flex-col gap-8 rounded-2xl bg-zinc-950/70 p-4 backdrop-blur-md sm:p-6 lg:flex-row">
         <div className="mx-auto w-40 shrink-0 sm:w-56 lg:mx-0">
           <div className="overflow-hidden rounded-xl shadow-2xl shadow-black ring-1 ring-white/10">
             {anime.poster && <img src={anime.poster} alt={titleOf(anime)} className="w-full object-cover" />}
@@ -138,12 +142,12 @@ export default function AnimeDetails() {
 
       <Container className="mt-14 space-y-12">
         <Section title="Episodes">
-          <div className="grid max-h-[420px] grid-cols-4 gap-2 overflow-y-auto rounded-xl border border-white/10 bg-white/[0.03] p-3 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10">
+          <div className="grid max-h-[400px] grid-cols-6 gap-1.5 overflow-y-auto p-1 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12">
             {episodeNumbers.map((n) => (
               <a
                 key={n}
                 href={href.watch(anime.malId, n, "sub")}
-                className="grid aspect-square place-items-center rounded-lg bg-white/5 text-sm font-semibold text-zinc-300 transition hover:bg-red-600 hover:text-white"
+                className="grid aspect-square place-items-center rounded-md text-xs font-medium text-zinc-500 transition hover:bg-white/5 hover:text-white"
               >
                 {n}
               </a>
