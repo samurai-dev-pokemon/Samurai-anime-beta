@@ -21,7 +21,7 @@
 <br />
 
 > [!IMPORTANT]
-> **AniVault is currently in Beta.** New features are landing regularly and
+> **Samurai Anime is currently in Beta.** New features are landing regularly and
 > some things may still be rough around the edges. See the
 > [roadmap](#-roadmap--coming-in-v10) below for what's coming next.
 
@@ -29,7 +29,7 @@
 
 ## ✨ What is Samurai Anime?
 
-AniVault is a fast, clean, good-looking home for watching anime. No pop-up
+Samurai Anime is a fast, clean, good-looking home for watching anime. No pop-up
 ads, no shady redirects, no clutter — just search for a show, click play, and
 go. Built to feel like a proper streaming platform: a cinematic home page,
 detailed anime pages, a real video player with sub/dub switching, and smart
@@ -76,16 +76,16 @@ Got a feature request? Open an issue — feedback shapes the roadmap.
 
 
 
-<h1>🙏 Powered By</h1>
+##🙏 Powered By
 All of AniVault's metadata, artwork, and video sources are made possible by
 the AniVault Scraper API — a huge thank you to it for doing all the heavy
 lifting behind the scenes so this app can focus purely on the experience.
 
-<h1>⚠️ Disclaimer</h1>
+##⚠️ Disclaimer
 AniVault is built for educational purposes. It does not host any video
 content itself — all media is sourced from third-party services.
 
-<h1>💌 Special Thanks</h1>
+##💌 Special Thanks
 A heartfelt thank you to everyone who supported this project along the way:
 
 Derrar · Suleiman · Tafik · Abdurahman · Shomina · Ali · Sohaib · Rac
