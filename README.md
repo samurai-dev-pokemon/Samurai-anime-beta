@@ -77,8 +77,11 @@ Got a feature request? Open an issue — feedback shapes the roadmap.
 
 ---
 ## 🙏 Powered By
+
+<p>
 All of Samurai Anime's metadata, artwork, and video sources are made possible by
 the<a src="https://github.com/SH0MIK/Anivault-Scraper"> AniVault Scraper API</a> — a huge thank you to SH0MIK making this API so this app can focus purely on the experience.
+</p>
 ---
 ## ⚠️ Disclaimer
 AniVault is built for educational purposes. It does not host any video
