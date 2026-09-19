@@ -7,4 +7,5 @@ export const href = {
     `/watch/${malId}?ep=${ep}&audio=${audio}`,
   genre: (genre: string) => `/genre/${encodeURIComponent(genre)}`,
   myList: () => "/my-list",
+  profile: () => "/profile",
 };

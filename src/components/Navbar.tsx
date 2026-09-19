@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { cn } from "../utils/cn";
 import { href } from "../utils/router";
-import { useUser, setUser } from "../lib/store";
+import { useUser, signOutUser } from "../lib/store";
 import { Icon } from "./ui";
 import Logo from "./Logo";
 import AuthModal from "./AuthModal";
@@ -86,18 +86,27 @@ export default function Navbar() {
             {user ? (
               <div className="relative">
                 <button onClick={() => setMenuOpen((v) => !v)} className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 py-1 pl-1 pr-2 text-sm text-zinc-200 transition hover:bg-white/10">
-                  <span className="grid h-7 w-7 place-items-center rounded-full bg-red-600 text-xs font-bold uppercase text-white">{user.name.slice(0, 1)}</span>
+                  <span className="grid h-7 w-7 place-items-center overflow-hidden rounded-full bg-red-600 text-xs font-bold uppercase text-white">
+                    {user.photoURL ? (
+                      <img src={user.photoURL} alt={user.name} className="h-full w-full object-cover" />
+                    ) : (
+                      user.name.slice(0, 1)
+                    )}
+                  </span>
                   <span className="hidden max-w-[90px] truncate sm:inline">{user.name}</span>
                 </button>
                 {menuOpen && (
                   <div className="absolute right-0 top-11 w-48 overflow-hidden rounded-xl border border-white/10 bg-zinc-950 py-1 shadow-xl" onMouseLeave={() => setMenuOpen(false)}>
+                    <Link to={href.profile()} className="block px-4 py-2.5 text-sm text-zinc-300 hover:bg-white/5 hover:text-white" onClick={() => setMenuOpen(false)}>
+                      Profile
+                    </Link>
                     <Link to={href.myList()} className="block px-4 py-2.5 text-sm text-zinc-300 hover:bg-white/5 hover:text-white" onClick={() => setMenuOpen(false)}>
                       My List
                     </Link>
                     <button
                       className="block w-full px-4 py-2.5 text-left text-sm text-zinc-300 hover:bg-white/5 hover:text-white"
                       onClick={() => {
-                        setUser(null);
+                        signOutUser();
                         setMenuOpen(false);
                       }}
                     >
@@ -126,6 +135,11 @@ export default function Navbar() {
                 {l.label}
               </Link>
             ))}
+            {user && (
+              <Link to={href.profile()} className="rounded-lg px-3 py-2 hover:bg-white/5 hover:text-white" onClick={() => setMobileOpen(false)}>
+                Profile
+              </Link>
+            )}
             {!user && (
               <button onClick={() => setAuthMode("signin")} className="rounded-lg px-3 py-2 text-left hover:bg-white/5 hover:text-white">
                 Sign In

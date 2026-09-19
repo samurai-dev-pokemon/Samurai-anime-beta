@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { auth } from "./firebase";
 import type { AuthUser, ProgressEntry, WatchlistEntry } from "./types";
 
 /* Minimal localStorage-backed store with a pub/sub layer so React
@@ -88,11 +90,13 @@ export function useWatchlist(): WatchlistEntry[] {
   return state;
 }
 
-/* ---------------- prototype auth (UI-only, not functional) ---------------- */
+/* ---------------- auth (backed by Firebase Authentication) ---------------- */
 export function getUser(): AuthUser | null {
   return read<AuthUser | null>(AUTH_KEY, null);
 }
 
+/** Optimistically set the cached user (e.g. right after sign in/up),
+ *  ahead of Firebase's own onAuthStateChanged confirmation below. */
 export function setUser(user: AuthUser | null) {
   write(AUTH_KEY, user);
 }
@@ -102,3 +106,26 @@ export function useUser(): AuthUser | null {
   useEffect(() => subscribe(AUTH_KEY, () => setState(getUser())), []);
   return state;
 }
+
+/** Signs out of Firebase and clears the cached local user. */
+export async function signOutUser() {
+  await signOut(auth);
+  write<AuthUser | null>(AUTH_KEY, null);
+}
+
+/* Keep the cached user in sync with real Firebase session state —
+   runs once when this module first loads (i.e. on app startup), and
+   again on every future sign-in/out, so refreshing the page doesn't
+   log the user out. */
+onAuthStateChanged(auth, (fbUser) => {
+  if (fbUser) {
+    write<AuthUser | null>(AUTH_KEY, {
+      uid: fbUser.uid,
+      name: fbUser.displayName || fbUser.email?.split("@")[0] || "User",
+      email: fbUser.email || "",
+      photoURL: fbUser.photoURL,
+    });
+  } else {
+    write<AuthUser | null>(AUTH_KEY, null);
+  }
+});
