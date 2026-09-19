@@ -63,7 +63,7 @@ tools that remember what you're watching and suggest what to watch next.
 
 ## 🗺️ Roadmap — Coming in v1.0
 
-AniVault is actively growing. Planned for the full 1.0 release:
+Samurai Anime is actively growing. Planned for the full 1.0 release:
 
 - [ ] 🔐 **Sign in / Sign up** with real persisted accounts
 - [ ] 👤 **User profiles** — avatars, multiple profiles per account
@@ -74,27 +74,34 @@ AniVault is actively growing. Planned for the full 1.0 release:
 
 Got a feature request? Open an issue — feedback shapes the roadmap.
 
-
 ---
+
 ## 🙏 Powered By
 
 <p>
 All of Samurai Anime's metadata, artwork, and video sources are made possible by
-the<a src="https://github.com/SH0MIK/Anivault-Scraper"> AniVault Scraper API</a> — a huge thank you to SH0MIK making this API so this app can focus purely on the experience.
+the <a href="https://github.com/SH0MIK/Anivault-Scraper">AniVault Scraper API</a> — a huge thank you to SH0MIK for making this API so this app can focus purely on the experience.
 </p>
+
 ---
+
 ## ⚠️ Disclaimer
-AniVault is built for educational purposes. It does not host any video
+
+Samurai Anime is built for educational purposes. It does not host any video
 content itself — all media is sourced from third-party services.
+
 ---
+
 ## 💌 Special Thanks
+
 A heartfelt thank you to everyone who supported this project along the way:
 
 Derrar · Suleiman · Tafik · Abdurahman · Shomina · Ali · Sohaib · Rac · Tamim
 
 Your support, feedback, and patience through the beta made this possible. 🙏
 
-<div align="center"> <br />
-Made with ❤️ by Samurai Dev
-
-<br /> </div>
+<div align="center">
+  <br />
+  Made with ❤️ by Samurai Dev
+  <br />
+</div>
