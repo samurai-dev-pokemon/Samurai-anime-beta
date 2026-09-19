@@ -75,20 +75,19 @@ AniVault is actively growing. Planned for the full 1.0 release:
 Got a feature request? Open an issue — feedback shapes the roadmap.
 
 
-
-##🙏 Powered By
-All of AniVault's metadata, artwork, and video sources are made possible by
-the AniVault Scraper API — a huge thank you to it for doing all the heavy
-lifting behind the scenes so this app can focus purely on the experience.
-
-##⚠️ Disclaimer
+---
+## 🙏 Powered By
+All of Samurai Anime's metadata, artwork, and video sources are made possible by
+the<a src="https://github.com/SH0MIK/Anivault-Scraper"> AniVault Scraper API</a> — a huge thank you to SH0MIK making this API so this app can focus purely on the experience.
+---
+## ⚠️ Disclaimer
 AniVault is built for educational purposes. It does not host any video
 content itself — all media is sourced from third-party services.
-
-##💌 Special Thanks
+---
+## 💌 Special Thanks
 A heartfelt thank you to everyone who supported this project along the way:
 
-Derrar · Suleiman · Tafik · Abdurahman · Shomina · Ali · Sohaib · Rac
+Derrar · Suleiman · Tafik · Abdurahman · Shomina · Ali · Sohaib · Rac · Tamim
 
 Your support, feedback, and patience through the beta made this possible. 🙏
 
