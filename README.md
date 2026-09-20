@@ -65,8 +65,8 @@ tools that remember what you're watching and suggest what to watch next.
 
 Samurai Anime is actively growing. Planned for the full 1.0 release:
 
-- [x] 🔐 **Sign in / Sign up** with real persisted accounts
-- [x] 👤 **User profiles** — avatars, multiple profiles per account
+- [x] 🔐 **Sign in / Sign up** with real persisted accounts (19/09)
+- [x] 👤 **User profiles** — avatars, multiple profiles per account(19/09)
 - [ ] 💬 **Comments** on episodes and anime pages
 - [ ] ☁️ **Cloud-synced watchlist & progress** (currently local-only)
 - [ ] ⭐ Ratings & reviews
