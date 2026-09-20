@@ -3,7 +3,7 @@ import { Link, useParams, useSearchParams } from "react-router-dom";
 import { cn } from "../utils/cn";
 import { href } from "../utils/router";
 import { findBestStream, getAnimeByMalId, resolveWatch, titleOf } from "../lib/api";
-import { getProgress, saveProgress } from "../lib/store";
+import { getProgress, removeFromWatchlist, removeProgress, saveProgress } from "../lib/store";
 import { useAsync } from "../lib/useAsync";
 import { Container, ErrorNote, Icon, Skeleton } from "../components/ui";
 import VideoPlayer from "../components/VideoPlayer";
@@ -62,6 +62,18 @@ export default function Watch() {
     setParams({ ep: String(n), audio });
   }
 
+  // Fires when the video reaches the end. If this was the final episode,
+  // the show is "finished" — pull it out of the user's list and drop its
+  // continue-watching entry. Otherwise, do nothing (no forced autoplay).
+  const onEnded = useCallback(async () => {
+    if (!anime) return;
+    const isLastEpisode = !!anime.episodes && ep >= anime.episodes;
+    if (isLastEpisode) {
+      await removeFromWatchlist(id);
+      await removeProgress(id);
+    }
+  }, [anime, id, ep]);
+
   const totalEps = anime?.episodes || ep;
   const episodeList = Array.from({ length: Math.min(totalEps, 2000) }, (_, i) => i + 1);
 
@@ -100,6 +112,7 @@ export default function Watch() {
       startAt={initial?.time || 0}
       title={anime ? `${titleOf(anime)} · Ep ${ep}` : undefined}
       onProgress={onProgress}
+      onEnded={onEnded}
       onNext={() => goEp(ep + 1)}
       hasNext={!!anime?.episodes && ep < anime.episodes}
     />

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { href } from "../utils/router";
 import {
@@ -11,16 +11,17 @@ import {
   titleOf,
 } from "../lib/api";
 import { getAnimeBatch } from "../lib/api";
-import { isInWatchlist, toggleWatchlist } from "../lib/store";
+import { toggleWatchlist, useWatchlist } from "../lib/store";
 import { useAsync } from "../lib/useAsync";
 import { AnimeCard, Badge, CardRow, CardSkeletons, Container, ErrorNote, Icon, RowItem, Section, Skeleton } from "../components/ui";
+import AuthModal from "../components/AuthModal";
 
 export default function AnimeDetails() {
   const { malId = "" } = useParams();
   const id = Number(malId);
   const [tick, setTick] = useState(0);
-  const [inList, setInList] = useState(false);
   const [showTrailer, setShowTrailer] = useState(false);
+  const [showAuth, setShowAuth] = useState(false);
 
   const { data: anime, loading, error } = useAsync(() => getAnimeByMalId(id), [id, tick]);
 
@@ -35,9 +36,18 @@ export default function AnimeDetails() {
     return { chars, videos, platforms, recAnime };
   }, [id]);
 
-  useMemo(() => {
-    if (id) setInList(isInWatchlist(id));
-  }, [id]);
+  const watchlist = useWatchlist();
+  const inList = watchlist.some((w) => w.animeId === id);
+
+  async function handleToggleList() {
+    if (!anime) return;
+    const result = await toggleWatchlist({
+      animeId: anime.malId,
+      title: titleOf(anime),
+      cover: anime.poster || anime.cover || "",
+    });
+    if (result.requiresAuth) setShowAuth(true);
+  }
 
   if (loading) {
     return (
@@ -116,10 +126,7 @@ export default function AnimeDetails() {
               </button>
             )}
             <button
-              onClick={() => {
-                const added = toggleWatchlist({ animeId: anime.malId, title: titleOf(anime), cover: anime.poster || anime.cover || "" });
-                setInList(added);
-              }}
+              onClick={handleToggleList}
               className="inline-flex h-11 items-center gap-2 rounded-full border border-white/15 bg-white/5 px-5 text-sm font-medium text-zinc-100 backdrop-blur transition hover:bg-white/10"
             >
               {inList ? <Icon.Check className="h-4 w-4 text-green-400" /> : <Icon.Plus className="h-4 w-4" />}
@@ -199,6 +206,8 @@ export default function AnimeDetails() {
           </div>
         </div>
       )}
+
+      {showAuth && <AuthModal mode="signup" onClose={() => setShowAuth(false)} />}
     </div>
   );
 }
