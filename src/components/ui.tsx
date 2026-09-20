@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { cn } from "../utils/cn";
@@ -64,12 +65,78 @@ export function Section({ title, action, children, id }: { title: string; action
   );
 }
 
+/* ---------------- horizontal scroll row w/ hover arrows + edge fade ---------------- */
 export function CardRow({ children }: { children: ReactNode }) {
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const [canLeft, setCanLeft] = useState(false);
+  const [canRight, setCanRight] = useState(false);
+
+  function updateArrows() {
+    const el = scrollerRef.current;
+    if (!el) return;
+    setCanLeft(el.scrollLeft > 4);
+    setCanRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+  }
+
+  useEffect(() => {
+    updateArrows();
+    const el = scrollerRef.current;
+    if (!el) return;
+    el.addEventListener("scroll", updateArrows, { passive: true });
+    const ro = new ResizeObserver(updateArrows);
+    ro.observe(el);
+    return () => {
+      el.removeEventListener("scroll", updateArrows);
+      ro.disconnect();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [children]);
+
+  function scrollByAmount(dir: 1 | -1) {
+    const el = scrollerRef.current;
+    if (!el) return;
+    el.scrollBy({ left: dir * el.clientWidth * 0.85, behavior: "smooth" });
+  }
+
+  // Real pixel fade at the scrollable edges via CSS mask, instead of a
+  // flat color overlay — avoids the hard-line artifact against busy
+  // poster art. Only fades the side that actually has more to scroll.
+  const fade = 56;
+  const maskImage = `linear-gradient(to right, ${canLeft ? "transparent, black " + fade + "px" : "black 0px"}, black calc(100% - ${canRight ? fade : 0}px), ${canRight ? "transparent" : "black"})`;
+
   return (
     <div className="group/row relative">
-      <div className="scrollbar-none -mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth px-1 pb-3 sm:gap-4">
+      <div
+        ref={scrollerRef}
+        className="scrollbar-none -mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth px-1 pb-3 transition-[mask-image] duration-300 sm:gap-4"
+        style={{ maskImage, WebkitMaskImage: maskImage }}
+      >
         {children}
       </div>
+
+      {canLeft && (
+        <button
+          onClick={() => scrollByAmount(-1)}
+          aria-label="Scroll left"
+          className="absolute left-1 top-0 bottom-3 z-10 flex items-center opacity-0 transition-opacity duration-200 group-hover/row:opacity-100"
+        >
+          <span className="grid h-10 w-10 place-items-center rounded-full bg-black/70 text-white ring-1 ring-white/10 backdrop-blur-sm transition hover:bg-black/90 hover:scale-110">
+            <Icon.ChevronLeft className="h-5 w-5" />
+          </span>
+        </button>
+      )}
+
+      {canRight && (
+        <button
+          onClick={() => scrollByAmount(1)}
+          aria-label="Scroll right"
+          className="absolute right-1 top-0 bottom-3 z-10 flex items-center opacity-0 transition-opacity duration-200 group-hover/row:opacity-100"
+        >
+          <span className="grid h-10 w-10 place-items-center rounded-full bg-black/70 text-white ring-1 ring-white/10 backdrop-blur-sm transition hover:bg-black/90 hover:scale-110">
+            <Icon.Chevron className="h-5 w-5" />
+          </span>
+        </button>
+      )}
     </div>
   );
 }
