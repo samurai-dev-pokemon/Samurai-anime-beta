@@ -3,7 +3,7 @@
 
   # Samurai Anime
 
-  ### Stream anything. From anywhere.
+  ### Stream Anime. From anywhere.
 
   A sleek, Netflix-style anime streaming site — search, browse, and watch
   thousands of titles in sub or dub, pick up right where you left off, and
