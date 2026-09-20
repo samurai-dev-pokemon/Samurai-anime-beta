@@ -77,8 +77,8 @@ export interface WatchResult {
   intro?: { start: number; end: number } | null;
   outro?: { start: number; end: number } | null;
   note?: string | null;
+  partial?: boolean; // true when the API returned a 206 (requested dub, got sub)
 }
-
 export interface ProgressEntry {
   animeId: number;
   title: string;
@@ -97,6 +97,7 @@ export interface WatchlistEntry {
   cover: string;
   addedAt: number;
 }
+
 
 export interface AuthUser {
   uid: string;

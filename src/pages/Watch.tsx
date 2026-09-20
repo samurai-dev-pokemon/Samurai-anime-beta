@@ -82,22 +82,29 @@ export default function Watch() {
 
         <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
           <div className="space-y-4">
-            {streamLoading ? (
-              <Skeleton className="aspect-video w-full" />
-            ) : error ? (
-              <ErrorNote msg={error} />
-            ) : (
-              <VideoPlayer
-                key={`${id}-${ep}-${audio}-${server}`}
-                stream={activeStream}
-                startAt={initial?.time || 0}
-                title={anime ? `${titleOf(anime)} · Ep ${ep}` : undefined}
-                onProgress={onProgress}
-                onNext={() => goEp(ep + 1)}
-                hasNext={!!anime?.episodes && ep < anime.episodes}
-              />
-            )}
-
+        {streamLoading ? (
+  <Skeleton className="aspect-video w-full" />
+) : error ? (
+  <ErrorNote msg={error} />
+) : (
+  <>
+    {activeStream?.partial && audio === "dub" && (
+      <div className="flex items-center gap-2 rounded-lg border border-amber-900/40 bg-amber-950/20 px-3 py-2 text-xs text-amber-200">
+        <Icon.Info className="h-4 w-4 shrink-0" />
+        Dub isn't available for this episode yet — playing Sub instead.
+      </div>
+    )}
+    <VideoPlayer
+      key={`${id}-${ep}-${audio}-${server}`}
+      stream={activeStream}
+      startAt={initial?.time || 0}
+      title={anime ? `${titleOf(anime)} · Ep ${ep}` : undefined}
+      onProgress={onProgress}
+      onNext={() => goEp(ep + 1)}
+      hasNext={!!anime?.episodes && ep < anime.episodes}
+    />
+  </>
+)}
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div className="space-y-1">
                 <h1 className="text-xl font-bold text-white sm:text-2xl">{anime ? titleOf(anime) : <span className="inline-block h-6 w-48 animate-pulse rounded bg-zinc-800" />}</h1>

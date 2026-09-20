@@ -64,7 +64,19 @@ export default function VideoPlayer({
 
     if (isHls) {
       if (Hls.isSupported()) {
-        const hls = new Hls({ maxBufferLength: 30, enableWorker: true });
+        const hls = new Hls({
+          maxBufferLength: 30,
+          enableWorker: true,
+          // The proxy chain (video -> our API -> upstream CDN) is more
+          // failure-prone than a direct CDN, so retry more patiently
+          // instead of stalling/erroring out on transient hiccups.
+          manifestLoadingMaxRetry: 4,
+          manifestLoadingRetryDelay: 1000,
+          levelLoadingMaxRetry: 4,
+          levelLoadingRetryDelay: 1000,
+          fragLoadingMaxRetry: 6,
+          fragLoadingRetryDelay: 1000,
+        });
         hlsRef.current = hls;
         hls.loadSource(src);
         hls.attachMedia(video);
@@ -74,7 +86,17 @@ export default function VideoPlayer({
           video.play().catch(() => {});
         });
         hls.on(Hls.Events.ERROR, (_e, data) => {
-          if (data.fatal) setErrored("Playback error — try another episode or server.");
+          if (data.fatal) {
+            // Try to recover from network hiccups instead of giving up
+            // immediately — common with the proxy adding extra latency.
+            if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+              hls.startLoad();
+            } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+              hls.recoverMediaError();
+            } else {
+              setErrored("Playback error — try another episode or server.");
+            }
+          }
         });
       } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
         video.src = src;
@@ -127,6 +149,24 @@ export default function VideoPlayer({
       video.removeEventListener("ended", onEnd);
     };
   }, [onProgress, onEnded]);
+
+  // Force the default subtitle track to actually render. <track default>
+  // alone isn't reliably honored by every browser when tracks are added
+  // dynamically via React, so we set textTrack.mode explicitly.
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    function applyTrackModes() {
+      const tracks = video!.textTracks;
+      for (let i = 0; i < tracks.length; i++) {
+        const subEntry = stream?.subtitles?.[i];
+        tracks[i].mode = subEntry?.default ? "showing" : "disabled";
+      }
+    }
+    video.addEventListener("loadedmetadata", applyTrackModes);
+    applyTrackModes();
+    return () => video.removeEventListener("loadedmetadata", applyTrackModes);
+  }, [stream]);
 
   useEffect(() => {
     const onFsChange = () => setFullscreen(!!document.fullscreenElement);
@@ -206,7 +246,7 @@ export default function VideoPlayer({
       onMouseMove={resetHideTimer}
       onMouseLeave={() => playing && setShowControls(false)}
     >
-      <video ref={videoRef} className="h-full w-full" onClick={togglePlay} playsInline>
+      <video ref={videoRef} className="h-full w-full" onClick={togglePlay} playsInline crossOrigin="anonymous">
         {stream?.subtitles?.map((s) => (
           <track key={s.url} src={s.url} kind="subtitles" srcLang="en" label={s.lang} default={s.default} />
         ))}

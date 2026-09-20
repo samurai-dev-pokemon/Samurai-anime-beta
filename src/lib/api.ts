@@ -249,7 +249,7 @@ export async function resolveWatch(opts: {
 }): Promise<WatchResult | null> {
   const { malId, ep, type, source = "anikoto", server, strict } = opts;
 
-  const idPart = `mal-${malId}`; // path-based format: AniList id OR mal-{malId}
+  const idPart = `mal-${malId}`;
   const query = new URLSearchParams();
   if (server) query.set("server", server);
   if (strict) query.set("strict", "1");
@@ -268,7 +268,9 @@ export async function resolveWatch(opts: {
       console.warn("[watch] api error", url, body);
       return null;
     }
-    return body as WatchResult;
+    // 206 = "dub not available, returned sub instead" — surface this to the UI
+    // instead of silently pretending the requested audio was honored.
+    return { ...body, partial: res.status === 206 } as WatchResult;
   } catch (e) {
     console.warn("[watch] network error", url, e);
     return null;
@@ -276,9 +278,11 @@ export async function resolveWatch(opts: {
 }
 
 /**
- * Tries to find a playable, ad-free (hls/mp4) stream. Falls back through
- * alternate servers and finally the alternate source before giving up and
- * returning whatever the API had (which may require an embed).
+ * Tries to find a playable, ad-free (hls/mp4) stream that actually matches
+ * the requested audio. Prefers an exact match; if only a "partial" (audio
+ * fallback) result is found anywhere, it's kept as a last resort so the
+ * page still plays something, but the caller can tell the difference via
+ * `.partial` and show a heads-up to the user instead of a silent swap.
  */
 export async function findBestStream(opts: {
   malId: number;
@@ -286,24 +290,32 @@ export async function findBestStream(opts: {
   type: "sub" | "dub";
 }): Promise<WatchResult | null> {
   const sources: Array<"anikoto" | "desidub"> = ["anikoto", "desidub"];
+  let bestFallback: WatchResult | null = null;
   let lastResult: WatchResult | null = null;
+
+  const isPlayable = (r: WatchResult | null) => !!r && (r.playbackMode === "hls" || r.playbackMode === "mp4");
 
   for (const source of sources) {
     const first = await resolveWatch({ ...opts, source });
     if (!first) continue;
     lastResult = first;
-    if (first.playbackMode === "hls" || first.playbackMode === "mp4") return first;
+    if (isPlayable(first)) {
+      if (!first.partial) return first;
+      if (!bestFallback) bestFallback = first;
+    }
 
     const others = (first.availableServers || []).filter((s) => s !== first.server).slice(0, 4);
     for (const server of others) {
       const attempt = await resolveWatch({ ...opts, source, server, strict: true });
-      if (attempt && (attempt.playbackMode === "hls" || attempt.playbackMode === "mp4")) {
-        return attempt;
+      if (!attempt) continue;
+      lastResult = attempt;
+      if (isPlayable(attempt)) {
+        if (!attempt.partial) return attempt;
+        if (!bestFallback) bestFallback = attempt;
       }
-      if (attempt) lastResult = attempt;
     }
   }
-  return lastResult;
+  return bestFallback || lastResult;
 }
 
 export function titleOf(a: Anime): string {
