@@ -98,6 +98,60 @@ export interface WatchlistEntry {
   addedAt: number;
 }
 
+export type ReactionType = "like" | "dislike";
+
+export interface ReactionEntry {
+  animeId: number;
+  type: ReactionType;
+  updatedAt: number;
+}
+
+export interface WatchedEntry {
+  animeId: number;
+  episodes: number[];
+  updatedAt: number;
+}
+
+export interface AnimeStats {
+  likes: number;
+  dislikes: number;
+}
+
+export interface CommentEntry {
+  id: string;
+  animeId: number;
+  episode?: number; // present only for per-episode comments (Watch page)
+  uid: string;
+  name: string;
+  photoURL?: string | null;
+  text: string;
+  createdAt: number;
+}
+export interface CommentEntry {
+  id: string;
+  animeId: number;
+  episode?: number;
+  uid: string;
+  name: string;
+  photoURL?: string | null;
+  text: string;
+  spoiler?: boolean;
+  likedBy?: string[];
+  createdAt: number;
+}
+
+export interface ReplyEntry {
+  id: string;
+  parentId: string;
+  uid: string;
+  name: string;
+  photoURL?: string | null;
+  text: string;
+  spoiler?: boolean;
+  likedBy?: string[];
+  createdAt: number;
+}
+
 
 export interface AuthUser {
   uid: string;

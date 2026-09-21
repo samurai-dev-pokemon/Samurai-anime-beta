@@ -34,6 +34,7 @@ export default function VideoPlayer({
   const videoRef = useRef<HTMLVideoElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const hlsRef = useRef<Hls | null>(null);
+  const skipFlashTimer = useRef<number | null>(null);
   const [playing, setPlaying] = useState(false);
   const [ready, setReady] = useState(false);
   const [buffering, setBuffering] = useState(true);
@@ -44,6 +45,7 @@ export default function VideoPlayer({
   const [showControls, setShowControls] = useState(true);
   const [fullscreen, setFullscreen] = useState(false);
   const [errored, setErrored] = useState<string | null>(null);
+  const [skipFlash, setSkipFlash] = useState<"back" | "fwd" | null>(null);
   const hideTimer = useRef<number | null>(null);
 
   const src = stream?.hlsProxyUrl || stream?.m3u8 || stream?.mp4 || "";
@@ -174,6 +176,37 @@ export default function VideoPlayer({
     return () => document.removeEventListener("fullscreenchange", onFsChange);
   }, []);
 
+  function seekBy(delta: number) {
+    const video = videoRef.current;
+    if (!video) return;
+    const max = duration || video.duration || Infinity;
+    video.currentTime = Math.min(Math.max(0, video.currentTime + delta), max);
+    setSkipFlash(delta > 0 ? "fwd" : "back");
+    if (skipFlashTimer.current) window.clearTimeout(skipFlashTimer.current);
+    skipFlashTimer.current = window.setTimeout(() => setSkipFlash(null), 550);
+  }
+
+  // Left/Right arrow keys rewind/skip 10s, mirroring YouTube/Netflix.
+  // Ignored while the user is typing somewhere (e.g. a search box) so it
+  // doesn't hijack normal text-field navigation.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const tag = (document.activeElement as HTMLElement | null)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+      if (!videoRef.current || !src) return;
+      if (e.key === "ArrowRight") {
+        e.preventDefault();
+        seekBy(10);
+      } else if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        seekBy(-10);
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [duration, src]);
+
   function togglePlay() {
     const video = videoRef.current;
     if (!video) return;
@@ -270,6 +303,15 @@ export default function VideoPlayer({
         </button>
       )}
 
+      {skipFlash && (
+        <div className="pointer-events-none absolute inset-0 grid place-items-center">
+          <div className="flex items-center gap-2 rounded-full bg-black/75 px-5 py-3 text-white backdrop-blur">
+            {skipFlash === "back" ? <Icon.Rewind10 className="h-6 w-6" /> : <Icon.Forward10 className="h-6 w-6" />}
+            <span className="text-sm font-semibold">{skipFlash === "back" ? "-10s" : "+10s"}</span>
+          </div>
+        </div>
+      )}
+
       <div className={cn("absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/50 to-transparent px-3 pb-2 pt-10 transition-opacity duration-300 sm:px-5", showControls ? "opacity-100" : "pointer-events-none opacity-0")}>
         <div
           className="group/bar relative mb-2 h-1.5 w-full cursor-pointer rounded-full bg-white/20"
@@ -283,8 +325,16 @@ export default function VideoPlayer({
         </div>
 
         <div className="flex items-center gap-3 text-white">
+          <button onClick={() => seekBy(-10)} aria-label="Rewind 10 seconds" className="text-zinc-300 transition hover:text-white">
+            <Icon.Rewind10 className="h-5 w-5" />
+          </button>
+
           <button onClick={togglePlay} aria-label="Play/Pause">
             {playing ? <Icon.Pause className="h-5 w-5" /> : <Icon.Play className="h-5 w-5" />}
+          </button>
+
+          <button onClick={() => seekBy(10)} aria-label="Forward 10 seconds" className="text-zinc-300 transition hover:text-white">
+            <Icon.Forward10 className="h-5 w-5" />
           </button>
 
           {hasNext && (
