@@ -57,7 +57,10 @@ function normalizeCombined(malId: number, raw: any): Anime {
     banner: d.banner || null,
     logo: d.logo || null,
     genres: d.genres || [],
-    score: d.score ?? null,
+    // MAL's native score is 0–10 (e.g. 8.75); normalize to the same 0–100
+    // scale AniList uses so Anime.score is consistent everywhere, and
+    // AnimeCard's `(score / 10).toFixed(1)` display math works app-wide.
+    score: d.score != null ? d.score * 10 : null,
     episodes: d.episodes ?? null,
     year: d.year ?? seasonToYear(d.premiered) ?? null,
     status: d.status ?? null,

@@ -10,12 +10,12 @@ export default function Footer() {
           <div className="max-w-sm space-y-3">
             <Logo />
             <p className="text-sm leading-relaxed text-zinc-500">
-              Samurai Anime is a fan-made streaming concept for browsing and watching anime with a clean,
-              ad-free-first player. Metadata via MyAnimeList / AniList, playback via the AniVault scraper.
+              Samurai Anime is a fan-made streaming platform for browsing and watching anime with a clean,
+              ad-free-first player. Metadata via MyAnimeList / AniList, playback via the AniVault scraper. Made with ❤️ by Samurai.Dev
             </p>
             <div className="flex gap-3 pt-1 text-zinc-500">
               <Icon.Shield className="h-4 w-4" />
-              <p className="text-xs">All titles are filtered to keep the browsing experience safe-for-work.</p>
+              <p className="text-xs">All titles are filtered to keep the browsing experience safe-for-work. Pls if you find a bug, report it to Issues!</p>
             </div>
           </div>
 
@@ -48,7 +48,7 @@ export default function Footer() {
           </div>
         </div>
         <p className="mt-10 border-t border-white/5 pt-6 text-xs text-zinc-600">
-          © {new Date().getFullYear()} Samurai Anime. Demo project — not affiliated with any streaming service. All logos & names are fictional.
+          © {new Date().getFullYear()} Samurai Anime is a Passion project — not affiliated with any streaming service. All logos & names are fictional.
         </p>
       </div>
     </footer>

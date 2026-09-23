@@ -1,4 +1,5 @@
 import { useState } from "react";
+import Comments from "../components/Comments";
 import { Link, useParams } from "react-router-dom";
 import { href } from "../utils/router";
 import {
@@ -11,9 +12,10 @@ import {
   titleOf,
 } from "../lib/api";
 import { getAnimeBatch } from "../lib/api";
-import { toggleWatchlist, useWatchlist } from "../lib/store";
+import { setReaction, toggleWatchlist, useAnimeStats, useReaction, useWatchedEpisodes, useWatchlist } from "../lib/store";
 import { useAsync } from "../lib/useAsync";
-import { AnimeCard, Badge, CardRow, CardSkeletons, Container, ErrorNote, Icon, RowItem, Section, Skeleton } from "../components/ui";
+import { AnimeCard, Badge, CardRow, CardSkeletons, Container, ErrorNote, formatCount, Icon, RowItem, Section, Skeleton } from "../components/ui";
+import { cn } from "../utils/cn";
 import AuthModal from "../components/AuthModal";
 
 export default function AnimeDetails() {
@@ -38,6 +40,9 @@ export default function AnimeDetails() {
 
   const watchlist = useWatchlist();
   const inList = watchlist.some((w) => w.animeId === id);
+  const reaction = useReaction(id);
+  const stats = useAnimeStats(id);
+  const watchedEpisodes = useWatchedEpisodes(id);
 
   async function handleToggleList() {
     if (!anime) return;
@@ -46,6 +51,12 @@ export default function AnimeDetails() {
       title: titleOf(anime),
       cover: anime.poster || anime.cover || "",
     });
+    if (result.requiresAuth) setShowAuth(true);
+  }
+
+  async function handleReaction(type: "like" | "dislike") {
+    if (!anime) return;
+    const result = await setReaction(anime.malId, type);
     if (result.requiresAuth) setShowAuth(true);
   }
 
@@ -74,6 +85,7 @@ export default function AnimeDetails() {
 
   return (
     <div className="min-h-screen pb-20">
+      
       <div className="relative h-[56vh] min-h-[380px] w-full overflow-hidden">
         <img
           src={anime.banner || anime.cover || anime.poster || ""}
@@ -132,6 +144,32 @@ export default function AnimeDetails() {
               {inList ? <Icon.Check className="h-4 w-4 text-green-400" /> : <Icon.Plus className="h-4 w-4" />}
               {inList ? "In My List" : "Add to List"}
             </button>
+
+            <div className="flex items-center gap-1 rounded-full border border-white/15 bg-white/5 p-1 backdrop-blur">
+              <button
+                onClick={() => handleReaction("like")}
+                aria-label="Like"
+                className={cn(
+                  "inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-xs font-semibold transition",
+                  reaction === "like" ? "bg-green-600/20 text-green-400" : "text-zinc-300 hover:bg-white/10 hover:text-white",
+                )}
+              >
+                <Icon.ThumbsUp className="h-4 w-4" />
+                <span className="tabular-nums">{formatCount(stats.likes)}</span>
+              </button>
+              <div className="h-5 w-px bg-white/10" />
+              <button
+                onClick={() => handleReaction("dislike")}
+                aria-label="Dislike"
+                className={cn(
+                  "inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-xs font-semibold transition",
+                  reaction === "dislike" ? "bg-red-600/20 text-red-400" : "text-zinc-300 hover:bg-white/10 hover:text-white",
+                )}
+              >
+                <Icon.ThumbsDown className="h-4 w-4" />
+                <span className="tabular-nums">{formatCount(stats.dislikes)}</span>
+              </button>
+            </div>
           </div>
 
           {extras.data?.platforms && extras.data.platforms.length > 0 && (
@@ -150,15 +188,23 @@ export default function AnimeDetails() {
       <Container className="mt-14 space-y-12">
         <Section title="Episodes">
           <div className="grid max-h-[400px] grid-cols-6 gap-1.5 overflow-y-auto p-1 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12">
-            {episodeNumbers.map((n) => (
-              <Link
-                key={n}
-                to={href.watch(anime.malId, n, "sub")}
-                className="grid aspect-square place-items-center rounded-md text-xs font-medium text-zinc-500 transition hover:bg-white/5 hover:text-white"
-              >
-                {n}
-              </Link>
-            ))}
+            {episodeNumbers.map((n) => {
+              const isWatched = watchedEpisodes.includes(n);
+              return (
+                <Link
+                  key={n}
+                  to={href.watch(anime.malId, n, "sub")}
+                  className={cn(
+                    "grid aspect-square place-items-center rounded-md text-xs font-medium transition",
+                    isWatched
+                      ? "bg-red-950/40 text-red-400 ring-1 ring-red-900/50 hover:bg-red-950/60"
+                      : "text-zinc-500 hover:bg-white/5 hover:text-white",
+                  )}
+                >
+                  {n}
+                </Link>
+              );
+            })}
           </div>
         </Section>
 
@@ -197,6 +243,9 @@ export default function AnimeDetails() {
             )}
           </>
         )}
+        <div className="border-t border-white/10 pt-8">
+        <Comments animeId={anime.malId} />
+      </div>
       </Container>
 
       {showTrailer && trailer && (
