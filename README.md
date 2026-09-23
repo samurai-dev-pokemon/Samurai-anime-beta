@@ -11,7 +11,7 @@
 
   <br />
 
-  ![Status](https://img.shields.io/badge/status-beta-orange?style=for-the-badge)
+  ![Status](https://img.shields.io/badge/status-1.0%20release-brightgreen?style=for-the-badge)
   ![Made with React](https://img.shields.io/badge/made%20with-React-61DAFB?style=for-the-badge&logo=react&logoColor=black)
   ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
   ![TailwindCSS](https://img.shields.io/badge/Tailwind-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)
@@ -20,10 +20,10 @@
 
 <br />
 
-> [!IMPORTANT]
-> **Samurai Anime is currently in Beta.** New features are landing regularly and
-> some things may still be rough around the edges. See the
-> [roadmap](#-roadmap--coming-in-v10) below for what's coming next.
+> [!NOTE]
+> **Samurai Anime 1.0 is here!** Accounts, profiles, and everything from beta
+> is now stable and ready to use. See the [what's next](#-whats-next) section
+> below for what's coming after 1.0.
 
 ---
 
@@ -32,8 +32,9 @@
 Samurai Anime is a fast, clean, good-looking home for watching anime. No pop-up
 ads, no shady redirects, no clutter — just search for a show, click play, and
 go. Built to feel like a proper streaming platform: a cinematic home page,
-detailed anime pages, a real video player with sub/dub switching, and smart
-tools that remember what you're watching and suggest what to watch next.
+detailed anime pages, a real video player with sub/dub switching, user
+accounts with profiles, and smart tools that remember what you're watching
+and suggest what to watch next.
 
 ---
 
@@ -46,7 +47,12 @@ tools that remember what you're watching and suggest what to watch next.
 - ⏱ **Continue Watching** — your progress is saved automatically per episode so you always pick up where you left off
 - 🤖 **Personalized recommendations** — suggestions generated from your own watch history, not generic top-10 lists
 - 📋 **My List** — save any anime to a personal watchlist for later
+- 🔐 **Accounts** — sign in / sign up with real, persisted accounts
+- 👤 **User profiles** — avatars and multiple profiles per account
 - 🎨 **Polished, responsive UI** — smooth transitions, skeleton loading states, and a layout that feels great on desktop and mobile alike
+- 💬 **Comments** on episodes and anime pages
+- ☁️ **Cloud-synced watchlist & progress**
+- ⭐ **Ratings & reviews**
 
 ---
 
@@ -61,16 +67,12 @@ tools that remember what you're watching and suggest what to watch next.
 
 ---
 
-## 🗺️ Roadmap — Coming in v1.0
+## 🔮 What's Next
 
-Samurai Anime is actively growing. Planned for the full 1.0 release:
+Samurai Anime doesn't stop at 1.0. Here's what's on the horizon:
 
-- [x] 🔐 **Sign in / Sign up** with real persisted accounts (19/09)
-- [x] 👤 **User profiles** — avatars, multiple profiles per account(19/09)
-- [ ] 💬 **Comments** on episodes and anime pages
-- [ ] ☁️ **Cloud-synced watchlist & progress** (currently local-only)
-- [ ] ⭐ Ratings & reviews
-- [ ] 🔔 New-episode notifications for followed anime
+
+- [ ] ⭐ It is mystery, who knows (mostly bug fixes lol)
 
 Got a feature request? Open an issue — feedback shapes the roadmap.
 
@@ -96,7 +98,7 @@ content itself — all media is sourced from third-party services.
 
 A heartfelt thank you to everyone who supported this project along the way:
 
-Derrar · Suleiman · Tafik · Abdurahman · Shomina · Ali · Sohaib · Rac · Tamim
+Slash · S · Randimo · Odaino · Xotic · CreativeLemming❤ · Sohaib · Rac · Temo
 
 Your support, feedback, and patience through the beta made this possible. 🙏
 
