@@ -333,3 +333,60 @@ export function cleanDesc(desc?: string | null): string {
     .replace(/\s+/g, " ")
     .trim();
 }
+/* ---------------- episode count (handles open-ended/airing shows) ---------------- */
+
+/**
+ * Resolves the real episode count for the Watch page's episode grid.
+ *
+ * MAL's `episodes` field is reliable for finished shows (and even most
+ * currently-airing seasonal shows with a known cour length), but it's
+ * `null` for open-ended long-runners like One Piece while they're still
+ * airing — so we can't just trust `anime.episodes` blindly. When it's
+ * missing, this asks the episodes endpoint directly for how many
+ * episodes actually exist, which reflects newly released episodes the
+ * next time someone loads the page (rather than being stuck at whatever
+ * number was true when the anime was first indexed).
+ * i am so smart right Odaino if your seeing this i am not attacking you  
+ */
+/* ---------------- episode count (handles open-ended/airing shows) ---------------- */
+const episodeCountCache = new Map<number, { count: number; ts: number }>();
+const EPISODE_COUNT_TTL = 5 * 60 * 1000; // 5 min — fresh enough to catch new eps, cheap enough to not spam the API
+
+
+export async function getEpisodeCount(malId: number, knownEpisodes?: number | null): Promise<number | null> {
+  if (knownEpisodes) return knownEpisodes;
+
+  const cached = episodeCountCache.get(malId);
+  if (cached && Date.now() - cached.ts < EPISODE_COUNT_TTL) return cached.count;
+
+  try {
+    const first = await getJSON<any>(`${API_BASE}/mal/anime/${malId}/episodes?page=1`);
+    const pageSize = first?.data?.length || 0;
+    if (pageSize === 0) return cached?.count ?? knownEpisodes ?? null;
+
+    // Some APIs do expose a reliable total — use it directly if present.
+    const explicitTotal =
+      first?.pagination?.items?.total ?? first?.pagination?.total ?? first?.total ?? first?.count ?? null;
+
+    let count: number;
+    if (typeof explicitTotal === "number" && explicitTotal > 0) {
+      count = explicitTotal;
+    } else {
+      count = pageSize;
+      let page = 1;
+      let lastPageLen = pageSize;
+      // Cap at 30 pages (~3000 eps at 100/page) so a broken response can't loop forever.
+      while (lastPageLen === pageSize && page < 30) {
+        page++;
+        const next = await getJSON<any>(`${API_BASE}/mal/anime/${malId}/episodes?page=${page}`);
+        lastPageLen = next?.data?.length || 0;
+        count += lastPageLen;
+      }
+    }
+
+    episodeCountCache.set(malId, { count, ts: Date.now() });
+    return count;
+  } catch {
+    return cached?.count ?? knownEpisodes ?? null;
+  }
+}

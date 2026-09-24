@@ -527,6 +527,23 @@ export async function toggleCommentLike(
   });
   return { requiresAuth: false };
 }
+const DUB_FALLBACK_KEY = "samurai.dubFallback.v1";
+
+// ---------------- dub fallback ---------------- 
+
+export function getDubFallbackEnabled(): boolean {
+  return read<boolean>(DUB_FALLBACK_KEY, true);
+}
+
+export function setDubFallbackEnabled(enabled: boolean) {
+  write(DUB_FALLBACK_KEY, enabled);
+}
+
+export function useDubFallbackEnabled(): boolean {
+  const [state, setState] = useState<boolean>(() => getDubFallbackEnabled());
+  useEffect(() => subscribe(DUB_FALLBACK_KEY, () => setState(getDubFallbackEnabled())), []);
+  return state;
+}
 
 /** Same as above, for a reply. */
 export async function toggleReplyLike(

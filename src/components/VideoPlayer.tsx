@@ -1,5 +1,5 @@
 import Hls from "hls.js";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { cn } from "../utils/cn";
 import { Icon } from "./ui";
 import type { WatchResult } from "../lib/types";
@@ -13,6 +13,10 @@ function fmt(t: number) {
   const ss = String(s).padStart(2, "0");
   return h ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
 }
+
+const SUB_SCALE_MIN = 0.6;
+const SUB_SCALE_MAX = 2.2;
+const SUB_SCALE_STEP = 0.1;
 
 export default function VideoPlayer({
   stream,
@@ -35,6 +39,7 @@ export default function VideoPlayer({
   const wrapRef = useRef<HTMLDivElement>(null);
   const hlsRef = useRef<Hls | null>(null);
   const skipFlashTimer = useRef<number | null>(null);
+  const videoId = useId().replace(/:/g, "");
   const [playing, setPlaying] = useState(false);
   const [ready, setReady] = useState(false);
   const [buffering, setBuffering] = useState(true);
@@ -42,15 +47,21 @@ export default function VideoPlayer({
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
   const [muted, setMuted] = useState(false);
+  const [volumeHover, setVolumeHover] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const [fullscreen, setFullscreen] = useState(false);
   const [errored, setErrored] = useState<string | null>(null);
   const [skipFlash, setSkipFlash] = useState<"back" | "fwd" | null>(null);
+  const [subtitlesEnabled, setSubtitlesEnabled] = useState(true);
+  const [subtitleScale, setSubtitleScale] = useState(1);
+  const [subFlash, setSubFlash] = useState<string | null>(null);
+  const subFlashTimer = useRef<number | null>(null);
   const hideTimer = useRef<number | null>(null);
 
   const src = stream?.hlsProxyUrl || stream?.m3u8 || stream?.mp4 || "";
   const isHls = !!(stream?.hlsProxyUrl || stream?.m3u8) && stream?.playbackMode !== "mp4";
   const needsEmbed = !src && !!stream?.embedUrl;
+  const hasSubtitles = !!stream?.subtitles?.length;
 
   useEffect(() => {
     setErrored(null);
@@ -69,9 +80,6 @@ export default function VideoPlayer({
         const hls = new Hls({
           maxBufferLength: 30,
           enableWorker: true,
-          // The proxy chain (video -> our API -> upstream CDN) is more
-          // failure-prone than a direct CDN, so retry more patiently
-          // instead of stalling/erroring out on transient hiccups.
           manifestLoadingMaxRetry: 4,
           manifestLoadingRetryDelay: 1000,
           levelLoadingMaxRetry: 4,
@@ -89,8 +97,6 @@ export default function VideoPlayer({
         });
         hls.on(Hls.Events.ERROR, (_e, data) => {
           if (data.fatal) {
-            // Try to recover from network hiccups instead of giving up
-            // immediately — common with the proxy adding extra latency.
             if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
               hls.startLoad();
             } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
@@ -152,23 +158,31 @@ export default function VideoPlayer({
     };
   }, [onProgress, onEnded]);
 
-  // Force the default subtitle track to actually render. <track default>
-  // alone isn't reliably honored by every browser when tracks are added
-  // dynamically via React, so we set textTrack.mode explicitly.
+  // Applies both the on/off toggle and the "which track is default" logic
+  // in one place. <track default> alone isn't reliably honored once tracks
+  // are added dynamically via React, so textTrack.mode is set explicitly
+  // every time subtitles are (re)loaded or the toggle changes.
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
     function applyTrackModes() {
       const tracks = video!.textTracks;
+      const subs = stream?.subtitles || [];
+      const hasExplicitDefault = subs.some((s) => s.default);
       for (let i = 0; i < tracks.length; i++) {
-        const subEntry = stream?.subtitles?.[i];
-        tracks[i].mode = subEntry?.default ? "showing" : "disabled";
+        if (!subtitlesEnabled) {
+          tracks[i].mode = "disabled";
+          continue;
+        }
+        const entry = subs[i];
+        const shouldShow = entry?.default || (!hasExplicitDefault && i === 0);
+        tracks[i].mode = shouldShow ? "showing" : "disabled";
       }
     }
     video.addEventListener("loadedmetadata", applyTrackModes);
     applyTrackModes();
     return () => video.removeEventListener("loadedmetadata", applyTrackModes);
-  }, [stream]);
+  }, [stream, subtitlesEnabled]);
 
   useEffect(() => {
     const onFsChange = () => setFullscreen(!!document.fullscreenElement);
@@ -186,26 +200,19 @@ export default function VideoPlayer({
     skipFlashTimer.current = window.setTimeout(() => setSkipFlash(null), 550);
   }
 
-  // Left/Right arrow keys rewind/skip 10s, mirroring YouTube/Netflix.
-  // Ignored while the user is typing somewhere (e.g. a search box) so it
-  // doesn't hijack normal text-field navigation.
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      const tag = (document.activeElement as HTMLElement | null)?.tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA") return;
-      if (!videoRef.current || !src) return;
-      if (e.key === "ArrowRight") {
-        e.preventDefault();
-        seekBy(10);
-      } else if (e.key === "ArrowLeft") {
-        e.preventDefault();
-        seekBy(-10);
-      }
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [duration, src]);
+  function flashSubSize(scale: number) {
+    setSubFlash(`Subtitles ${Math.round(scale * 100)}%`);
+    if (subFlashTimer.current) window.clearTimeout(subFlashTimer.current);
+    subFlashTimer.current = window.setTimeout(() => setSubFlash(null), 900);
+  }
+
+  function bumpSubtitleScale(delta: number) {
+    setSubtitleScale((s) => {
+      const next = Math.min(SUB_SCALE_MAX, Math.max(SUB_SCALE_MIN, +(s + delta).toFixed(2)));
+      flashSubSize(next);
+      return next;
+    });
+  }
 
   function togglePlay() {
     const video = videoRef.current;
@@ -213,6 +220,39 @@ export default function VideoPlayer({
     if (video.paused) video.play().catch(() => {});
     else video.pause();
   }
+
+  // Keyboard shortcuts: Space play/pause, Left/Right seek 10s, +/- resize
+  // subtitles. All ignored while typing in a form field, or while focus is
+  // on one of our own <button> controls (so Space doesn't both activate
+  // the focused button *and* re-toggle play via this global handler).
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const el = document.activeElement as HTMLElement | null;
+      const tag = el?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "BUTTON" || tag === "SELECT" || el?.isContentEditable) return;
+      if (!videoRef.current || !src) return;
+
+      if (e.key === " " || e.code === "Space") {
+        e.preventDefault();
+        togglePlay();
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        seekBy(10);
+      } else if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        seekBy(-10);
+      } else if (e.key === "-" || e.key === "_") {
+        e.preventDefault();
+        bumpSubtitleScale(-SUB_SCALE_STEP);
+      } else if (e.key === "+" || e.key === "=") {
+        e.preventDefault();
+        bumpSubtitleScale(SUB_SCALE_STEP);
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [duration, src]);
 
   function seek(pct: number) {
     const video = videoRef.current;
@@ -279,7 +319,13 @@ export default function VideoPlayer({
       onMouseMove={resetHideTimer}
       onMouseLeave={() => playing && setShowControls(false)}
     >
-      <video ref={videoRef} className="h-full w-full" onClick={togglePlay} playsInline crossOrigin="anonymous">
+      {/* Scoped ::cue styling so subtitle size can be controlled per this
+          player instance without affecting other <video> elements on the
+          page — font-size is one of the few properties WebVTT allows
+          inside ::cue per spec. */}
+      <style>{`#${videoId}::cue { font-size: ${subtitleScale}em; }`}</style>
+
+      <video id={videoId} ref={videoRef} className="h-full w-full" onClick={togglePlay} playsInline crossOrigin="anonymous">
         {stream?.subtitles?.map((s) => (
           <track key={s.url} src={s.url} kind="subtitles" srcLang="en" label={s.lang} default={s.default} />
         ))}
@@ -296,19 +342,28 @@ export default function VideoPlayer({
       )}
 
       {!playing && ready && !buffering && (
-        <button onClick={togglePlay} className="absolute inset-0 grid place-items-center bg-black/20 transition hover:bg-black/30" aria-label="Play">
-          <span className="grid h-16 w-16 place-items-center rounded-full bg-red-600/90 text-white shadow-xl">
-            <Icon.Play className="ml-1 h-7 w-7" />
-          </span>
-        </button>
-      )}
-
+  <button
+    onClick={togglePlay}
+    className="absolute inset-0 grid place-items-center bg-black/10 transition hover:bg-black/20"
+    aria-label="Play"
+  >
+    <span className="grid h-16 w-16 place-items-center rounded-full border border-white/20 bg-black/45 text-white shadow-lg backdrop-blur-md transition duration-200 hover:scale-105 hover:border-red-500/50 hover:bg-black/60">
+      <Icon.Play className="ml-1 h-6 w-6" />
+    </span>
+  </button>
+)}
       {skipFlash && (
         <div className="pointer-events-none absolute inset-0 grid place-items-center">
           <div className="flex items-center gap-2 rounded-full bg-black/75 px-5 py-3 text-white backdrop-blur">
             {skipFlash === "back" ? <Icon.Rewind10 className="h-6 w-6" /> : <Icon.Forward10 className="h-6 w-6" />}
             <span className="text-sm font-semibold">{skipFlash === "back" ? "-10s" : "+10s"}</span>
           </div>
+        </div>
+      )}
+
+      {subFlash && (
+        <div className="pointer-events-none absolute inset-x-0 top-6 flex justify-center">
+          <div className="rounded-full bg-black/75 px-4 py-1.5 text-xs font-semibold text-white backdrop-blur">{subFlash}</div>
         </div>
       )}
 
@@ -324,7 +379,7 @@ export default function VideoPlayer({
           <div className="absolute -top-1 h-3.5 w-3.5 -translate-x-1/2 rounded-full bg-red-500 opacity-0 shadow transition group-hover/bar:opacity-100" style={{ left: `${pct}%` }} />
         </div>
 
-        <div className="flex items-center gap-3 text-white">
+        <div className="flex flex-wrap items-center gap-3 text-white">
           <button onClick={() => seekBy(-10)} aria-label="Rewind 10 seconds" className="text-zinc-300 transition hover:text-white">
             <Icon.Rewind10 className="h-5 w-5" />
           </button>
@@ -343,20 +398,62 @@ export default function VideoPlayer({
             </button>
           )}
 
-          <div className="group/vol flex items-center gap-1.5">
+          <div
+            className="group/vol flex items-center gap-1.5"
+            onMouseEnter={() => setVolumeHover(true)}
+            onMouseLeave={() => setVolumeHover(false)}
+          >
             <button onClick={toggleMute} aria-label="Mute">
               {muted || volume === 0 ? <Icon.Mute className="h-4.5 w-4.5" /> : <Icon.Volume className="h-4.5 w-4.5" />}
             </button>
-            <input
-              type="range"
-              min={0}
-              max={1}
-              step={0.05}
-              value={muted ? 0 : volume}
-              onChange={(e) => changeVolume(Number(e.target.value))}
-              className="h-1 w-0 accent-red-600 transition-all duration-200 group-hover/vol:w-16"
-            />
+            {/* Wrapper is the only thing that animates width. The <input>
+                itself always keeps a real, fixed w-16 box — so the browser
+                never has to render a thumb against a collapsing track,
+                which was the actual cause of the stray dot next to the
+                speaker icon. overflow-hidden on the wrapper simply reveals
+                or hides the fixed-size slider underneath. */}
+            <div className={cn("overflow-hidden transition-all duration-200", volumeHover ? "w-16" : "w-0")}>
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.05}
+                value={muted ? 0 : volume}
+                onChange={(e) => changeVolume(Number(e.target.value))}
+                onFocus={() => setVolumeHover(true)}
+                onBlur={() => setVolumeHover(false)}
+                className="volume-slider h-1 w-16"
+              />
+            </div>
           </div>
+
+          {hasSubtitles && (
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => bumpSubtitleScale(-SUB_SCALE_STEP)}
+                disabled={!subtitlesEnabled}
+                aria-label="Decrease subtitle size"
+                className="grid h-6 w-6 place-items-center rounded text-sm font-bold text-zinc-300 transition hover:bg-white/10 hover:text-white disabled:opacity-30"
+              >
+                −
+              </button>
+              <button
+                onClick={() => setSubtitlesEnabled((v) => !v)}
+                aria-label="Toggle subtitles"
+                className={cn("transition", subtitlesEnabled ? "text-white" : "text-zinc-500 hover:text-white")}
+              >
+                {subtitlesEnabled ? <Icon.Captions className="h-4.5 w-4.5" /> : <Icon.CaptionsOff className="h-4.5 w-4.5" />}
+              </button>
+              <button
+                onClick={() => bumpSubtitleScale(SUB_SCALE_STEP)}
+                disabled={!subtitlesEnabled}
+                aria-label="Increase subtitle size"
+                className="grid h-6 w-6 place-items-center rounded text-sm font-bold text-zinc-300 transition hover:bg-white/10 hover:text-white disabled:opacity-30"
+              >
+                +
+              </button>
+            </div>
+          )}
 
           <span className="text-xs tabular-nums text-zinc-300">
             {fmt(time)} / {fmt(duration)}
