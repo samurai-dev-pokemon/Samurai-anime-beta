@@ -21,6 +21,7 @@ export const Icon = {
   Pause: svg(<><rect x="6" y="4" width="4" height="16" fill="currentColor" stroke="none" /><rect x="14" y="4" width="4" height="16" fill="currentColor" stroke="none" /></>),
   Star: svg(<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="currentColor" stroke="none" />),
   X: svg(<><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></>),
+
   Search: svg(<><circle cx="11" cy="11" r="7" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></>),
   Chevron: svg(<polyline points="9 18 15 12 9 6" />),
   ChevronLeft: svg(<polyline points="15 18 9 12 15 6" />),
@@ -31,8 +32,11 @@ export const Icon = {
   Menu: svg(<><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" /></>),
   Volume: svg(<><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" stroke="none" /><path d="M15.54 8.46a5 5 0 0 1 0 7.07" /><path d="M19.07 4.93a10 10 0 0 1 0 14.14" /></>),
   Mute: svg(<><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" stroke="none" /><line x1="23" y1="9" x2="17" y2="15" /><line x1="17" y1="9" x2="23" y2="15" /></>),
+  Captions: svg(<><rect x="2" y="5" width="20" height="14" rx="2" /><line x1="6" y1="10" x2="10" y2="10" /><line x1="6" y1="14" x2="14" y2="14" /><line x1="14" y1="10" x2="18" y2="10" /></>),
+  CaptionsOff: svg(<><rect x="2" y="5" width="20" height="14" rx="2" /><line x1="6" y1="10" x2="10" y2="10" /><line x1="6" y1="14" x2="14" y2="14" /><line x1="1" y1="1" x2="23" y2="23" /></>),
   Expand: svg(<><path d="M8 3H5a2 2 0 0 0-2 2v3" /><path d="M21 8V5a2 2 0 0 0-2-2h-3" /><path d="M3 16v3a2 2 0 0 0 2 2h3" /><path d="M16 21h3a2 2 0 0 0 2-2v-3" /></>),
   Loader: svg(<circle cx="12" cy="12" r="9" strokeDasharray="42" strokeDashoffset="14" />),
+  Pause: svg(<><line x1="7" y1="4" x2="7" y2="20" /><line x1="17" y1="4" x2="17" y2="20" /></>),
   Bell: svg(<><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" /></>),
   Clock: svg(<><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></>),
   Eye: svg(<><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></>),
@@ -255,5 +259,23 @@ export function AnimeCard({ anime, showMeta = true }: { anime: Anime; showMeta?:
         </div>
       )}
     </Link>
+  );
+}
+/* ---------------- toggle switch ---------------- */
+export function Switch({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label?: string }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      onClick={() => onChange(!checked)}
+      className={cn(
+        "flex h-5 w-9 shrink-0 items-center rounded-full p-0.5 transition",
+        checked ? "bg-red-600" : "bg-white/15",
+      )}
+    >
+      <span className={cn("h-4 w-4 rounded-full bg-white shadow transition-transform", checked ? "translate-x-4" : "translate-x-0")} />
+    </button>
   );
 }
